@@ -1,4 +1,4 @@
-# Peripheral Battery
+# Peripheral Battery Indicator
 
 Battery levels for your wireless **mouse, keyboard, headset & controllers**,
 right in the Omarchy bar. A single battery-bluetooth icon sits in the bar and
