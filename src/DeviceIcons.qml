@@ -37,4 +37,7 @@ QtObject {
 
     // charging indicator: nf-md-lightning_bolt
     readonly property string bolt: String.fromCodePoint(0xF140B)
+
+    // fixed bar summary icon: battery + wireless device (nf-md-battery_bluetooth)
+    readonly property string summary: String.fromCodePoint(0xF0948)
 }

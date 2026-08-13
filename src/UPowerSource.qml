@@ -44,7 +44,9 @@ Item {
         for (var i = 0; i < list.length; i++) {
             var d = list[i];
             if (!d || !d.ready) continue;
-            if (d.isLaptopBattery && hideLaptopBattery) continue;
+            if (d.type === UPowerDeviceType.LinePower) continue;   // AC adapters
+            if (d.isLaptopBattery && hideLaptopBattery) continue;  // laptop battery
+            if (!(d.percentage > 0)) continue;                     // no real reading (0% = AC/aggregate)
 
             var t = typeName(d.type);
             if (!deviceTypes.includes(t)) continue;
