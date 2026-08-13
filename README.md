@@ -26,12 +26,20 @@ Plugins land **disabled** until you review them; `--enable` opts in. It drops
 into the bar's right section — move it with `omarchy bar move
 hl.peripheral_battery --section <left|center|right>`.
 
-Update or remove later:
+## Update
 
 ```bash
 omarchy plugin update hl.peripheral_battery
+```
+
+## Uninstall
+
+```bash
 omarchy plugin remove hl.peripheral_battery
 ```
+
+This disables the widget, removes it from the bar (`shell.json`), and deletes
+the plugin from `~/.config/omarchy/plugins/`.
 
 ## Requirements
 
