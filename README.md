@@ -13,12 +13,6 @@ omarchy plugin add https://github.com/<you>/omarchy-peripheral-battery
 
 Then add the **Peripheral Battery** widget from the bar widget picker (Hardware).
 
-## Remove
-
-```bash
-omarchy plugin remove <you>.peripheral-battery   # TODO: confirm exact remove command
-```
-
 ## Requirements
 
 - `upower` (ships with Omarchy)

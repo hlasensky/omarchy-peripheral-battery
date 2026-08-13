@@ -12,8 +12,7 @@ Item {
     property int  lowThreshold: 20     // wired from Widget settings
     property bool notifyOnLow: true
     property bool hideLaptopBattery: true
-    property var  deviceTypes: ["mouse", "keyboard", "headset",
-    "headphones", "gaming input", "gamepad", "pen", "other"]
+    property var  deviceTypes: DeviceIcons.known   // filter set; overridden by Widget
     property bool useUPower: false
 
 
@@ -112,21 +111,25 @@ Item {
             return m ? m[1].trim() : "";
         }
 
-        var rawType   = field(/\btype:\s*(.+)/);
+        // `upower -i` has NO `type:` key — the type is a bare section-header line
+        // (e.g. "  headset") sitting above the indented percentage/state block.
+        // Header vocabulary is centralized in DeviceIcons.parseHeaders.
+        var headers = DeviceIcons.parseHeaders.join("|");
+        var typeMatch = block.match(new RegExp("^[ \\t]+(" + headers + ")\\b[ \\t]*$", "mi"));
+        var type = typeMatch ? typeMatch[1].toLowerCase() : "";
+
         var pctStr    = field(/percentage:\s*([0-9]+)/);
-        var state     = field(/state:\s*(\S+)/);
+        var state     = field(/\bstate:\s*(\S+)/);   // peripherals often omit this
         var model     = field(/model:\s*(.+)/);
         var powerSup  = field(/power supply:\s*(\S+)/);
 
         if (powerSup === "yes" && hideLaptopBattery) return null;
-
-        var type = rawType.toLowerCase();
         if (!deviceTypes.includes(type)) return null;
 
         var pct = parseInt(pctStr, 10);
         if (isNaN(pct)) return null;
-        return {id: path, type: type, pct: pct, state: state, model: model, charging: state === "charging" || state === "fully-charged"
-};
+        return {id: path, type: type, pct: pct, state: state || "unknown", model: model,
+                charging: state === "charging" || state === "fully-charged"};
     }
 
     function publish() {
@@ -144,7 +147,10 @@ Item {
 
         for (var i = 0; i < list.length; i++) {
             var d = list[i];
-            var below = d.pct <= lowThreshold && d.state === "discharging";
+            // peripherals often report no state ("unknown") — treat anything
+            // that isn't actively charging as eligible for the low warning.
+            var below = d.pct <= lowThreshold
+                        && d.state !== "charging" && d.state !== "fully-charged";
             if (below && !_notified[d.id]) {
                 notify(d);
                 _notified[d.id] = true;

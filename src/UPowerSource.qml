@@ -12,8 +12,7 @@ Item {
 
     // mirrored from BatteryService (set as bindings on createObject)
     property bool hideLaptopBattery: true
-    property var  deviceTypes: ["mouse", "keyboard", "headset",
-        "headphones", "gaming input", "gamepad", "pen", "other"]
+    property var  deviceTypes: DeviceIcons.known   // canonical type set
 
     property var devices: []
 
