@@ -15,10 +15,6 @@ with its charge, and get a desktop notification before a device dies.
 - **Click-through popup** — click the icon for the full list (icon, name,
   charge %, mini bar, charging bolt). Click anywhere else to dismiss.
 - **Low-battery notifications** — fired once per dip, re-armed on recharge.
-- **Native UPower** — uses Quickshell's `Quickshell.Services.UPower` when
-  available, and falls back to parsing the `upower` CLI otherwise. No polling
-  when the native path is live; it's event-driven.
-- **Laptop battery hidden** by default — this is about *peripherals*.
 
 ## Install
 
@@ -28,13 +24,13 @@ omarchy plugin add https://github.com/hlasensky/omarchy-peripheral-battery.git -
 
 Plugins land **disabled** until you review them; `--enable` opts in. It drops
 into the bar's right section — move it with `omarchy bar move
-hlasensky.peripheral_battery --section <left|center|right>`.
+hl.peripheral_battery --section <left|center|right>`.
 
 Update or remove later:
 
 ```bash
-omarchy plugin update hlasensky.peripheral_battery
-omarchy plugin remove hlasensky.peripheral_battery
+omarchy plugin update hl.peripheral_battery
+omarchy plugin remove hl.peripheral_battery
 ```
 
 ## Requirements

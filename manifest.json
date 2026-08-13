@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "hlasensky.peripheral_battery",
+  "id": "hl.peripheral_battery",
   "name": "Peripheral Battery",
   "version": "0.2.0",
   "author": "hlasensky",

@@ -6,7 +6,7 @@ import qs.Commons    // Color, Style tokens
 // bar.shell.updateEntryInline(moduleName, settings).
 BarWidget {
     id: root
-    moduleName: "hlasensky.peripheral_battery"  // must match manifest id
+    moduleName: "hl.peripheral_battery"  // must match manifest id
 
     readonly property int  lowThreshold: setting("lowThreshold", 20)
     readonly property bool hideLaptop:   setting("hideLaptopBattery", true)
