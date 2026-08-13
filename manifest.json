@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "hlasensky.peripheral_battery",
+  "name": "Peripheral Battery",
+  "version": "0.1.0",
+  "author": "hlasensky",
+  "kinds": ["bar-widget", "service"],
+  "entryPoints": {
+    "barWidget": "src/Widget.qml",
+    "service": "src/BatteryService.qml"
+  },
+  "barWidget": {
+    "displayName": "Peripheral Battery",
+    "description": "Battery for wireless mouse, keyboard, headset, controller",
+    "category": "Hardware",
+    "allowMultiple": false,
+    "defaults": {
+      "lowThreshold": 20,
+      "showLabels": true,
+      "hideLaptopBattery": true,
+      "notifyOnLow": true,
+      "deviceTypes": ["mouse", "keyboard", "headset", "gamepad"]
+    },
+    "schema": [
+      {"key": "lowThreshold", "type": "integer", "min": 5, "max": 50, "label": "Low battery %"},
+      {"key": "showLabels", "type": "boolean", "label": "Show % text"},
+      {"key": "hideLaptopBattery", "type": "boolean", "label": "Hide laptop battery"},
+      {"key": "notifyOnLow", "type": "boolean", "label": "Notify on low"},
+      {"key": "deviceTypes", "type": "multiselect",
+       "options": ["mouse", "keyboard", "headset", "gamepad", "pen", "other"],
+       "label": "Device types to show"}
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+# Local module for the plugin's own QML files.
+# Singleton must be registered here so `DeviceIcons.glyph(...)` resolves.
+singleton DeviceIcons DeviceIcons.qml
+
+# Non-singleton types resolve by filename in the same dir, but list them for clarity.
+BatteryService BatteryService.qml
+Panel Panel.qml
+Widget Widget.qml

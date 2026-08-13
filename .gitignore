@@ -1,0 +1,7 @@
+# editor / OS cruft
+*.swp
+*~
+.DS_Store
+.qmlls.ini
+claude.md
+.claude
