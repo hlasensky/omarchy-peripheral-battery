@@ -59,7 +59,7 @@ BarWidget {
         id: card
         anchorItem: button
         bar: root.bar
-        contentWidth: 320
+        contentWidth: panel.implicitWidth
         contentHeight: panel.implicitHeight + card.verticalContentInset
 
         DevicePanel {
