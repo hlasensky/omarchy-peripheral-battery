@@ -57,10 +57,16 @@ Item {
 
     Timer {
         id: poll
-        interval: 30000                // 30s safety net; UPower is event-driven.
+        interval: 30000                // 30s safety net.
         repeat: true
-        running: !svc.useUPower        // path A is event-driven; no polling needed
-        onTriggered: refresh()
+        running: true
+        // UPower.devices.valuesChanged only fires when a device is added or
+        // removed, not when an existing device's percentage/state changes —
+        // so PATH A needs periodic re-publishing too, not just PATH B's CLI scan.
+        onTriggered: {
+            if (svc.useUPower) { if (svc._upower) svc._upower.rebuild(); }
+            else refresh();
+        }
     }
 
     // PATH A wrapper, instantiated only if Quickshell.Services.UPower resolves.
