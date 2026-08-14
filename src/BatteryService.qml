@@ -116,7 +116,7 @@ Item {
         // Header vocabulary is centralized in DeviceIcons.parseHeaders.
         var headers = DeviceIcons.parseHeaders.join("|");
         var typeMatch = block.match(new RegExp("^[ \\t]+(" + headers + ")\\b[ \\t]*$", "mi"));
-        var type = typeMatch ? typeMatch[1].toLowerCase() : "";
+        var type = DeviceIcons.normalizeType(typeMatch ? typeMatch[1] : "");
 
         var pctStr    = field(/percentage:\s*([0-9]+)/);
         var state     = field(/\bstate:\s*(\S+)/);   // peripherals often omit this

@@ -22,7 +22,7 @@ Item {
         case UPowerDeviceType.Keyboard:    return "keyboard";
         case UPowerDeviceType.Headset:     return "headset";
         case UPowerDeviceType.Headphones:  return "headphones";
-        case UPowerDeviceType.GamingInput: return "gaming input";
+        case UPowerDeviceType.GamingInput: return "gamepad";
         case UPowerDeviceType.Pen:         return "pen";
         default:                           return "other";
         }
