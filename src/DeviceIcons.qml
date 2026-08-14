@@ -12,15 +12,23 @@ QtObject {
     // Canonical peripheral types we display. Also the default filter set.
     readonly property var known: [
         "mouse", "keyboard", "headset", "headphones",
-        "gaming input", "gamepad", "pen", "other"
+        "gamepad", "pen", "other"
     ]
 
     // Section-header words `upower -i` can emit (path B parses these). Superset of
     // `known` plus power-supply / non-peripheral types we recognize only so the
     // parser can identify and then filter them out.
     readonly property var parseHeaders: [
+        "gaming-input", "gaming input",
         "battery", "ups", "tablet", "phone", "touchpad", "speakers"
     ].concat(known)
+
+    function normalizeType(type) {
+        var normalized = String(type || "").trim().toLowerCase();
+        if (normalized === "gaming-input" || normalized === "gaming input")
+            return "gamepad";
+        return normalized;
+    }
 
     function glyph(type) {
         switch (type) {
@@ -28,8 +36,7 @@ QtObject {
         case "keyboard":     return String.fromCodePoint(0xF030C); // nf-md-keyboard
         case "headset":
         case "headphones":   return String.fromCodePoint(0xF02CB); // nf-md-headphones
-        case "gamepad":
-        case "gaming input": return String.fromCodePoint(0xF0296); // nf-md-gamepad
+        case "gamepad":      return String.fromCodePoint(0xF0296); // nf-md-gamepad
         case "pen":          return String.fromCodePoint(0xF03EA); // nf-md-pen
         default:             return String.fromCodePoint(0xF0079); // nf-md-battery
         }
