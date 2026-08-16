@@ -10,6 +10,7 @@ Item {
 
     property var devices: []
     property int lowThreshold: 20
+    property int criticalThreshold: 10
 
     readonly property int vpad: Style.spacing.sm
     readonly property int hpad: Style.spacing.md
@@ -70,9 +71,9 @@ Item {
                     Layout.alignment: Qt.AlignTop
                     spacing: Style.spacing.xs
 
-                    readonly property bool low: modelData.pct <= panel.lowThreshold
-                        && modelData.state !== "charging" && modelData.state !== "fully-charged"
-                    readonly property color tint: low ? Color.urgent : Color.popups.text
+                    readonly property int tier: DeviceIcons.tier(modelData.pct, modelData.state,
+                        panel.lowThreshold, panel.criticalThreshold)
+                    readonly property color tint: DeviceIcons.tierColor(tier, Color.popups.text)
 
                     // battery ring gauge — percentage centered inside, bolt
                     // swaps in only while charging (replaces device-type

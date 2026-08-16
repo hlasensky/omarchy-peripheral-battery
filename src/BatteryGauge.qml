@@ -9,7 +9,7 @@ import qs.Commons  // Color, Style
 //
 // Ring color is a straight lerp between Color.urgent (0%) and Color.accent
 // (100%) — both theme tokens already used by this plugin's low-battery
-// convention (DevicePanel's row `tint`, Widget's `repLow`), so the gauge
+// convention (DevicePanel's row `tint`, Widget's `repTier`), so the gauge
 // tracks whatever theme is active instead of a fixed rainbow.
 //
 // Centered content swaps by state instead of layering both: the percentage

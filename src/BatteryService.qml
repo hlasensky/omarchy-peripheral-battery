@@ -10,11 +10,12 @@ Item {
     // --- Public API -------------------------------------------------------
     property var  devices: []          // [{id, type, pct, state, model, charging}]
     property int  lowThreshold: 20     // wired from Widget settings
+    property int  criticalThreshold: 10
     property bool notifyOnLow: true
+    property int  notifyRepeatMinutes: 0   // 0 = notify once per dip (no repeat)
     property bool hideLaptopBattery: true
     property var  deviceTypes: DeviceIcons.known   // filter set; overridden by Widget
     property bool useUPower: false
-
 
     // --- PATH B: parse the `upower` CLI ----------------------------------
     // upower -e         -> device object paths (one per line)
@@ -143,25 +144,29 @@ Item {
         checkLow(_collected);
     }
 
-    // --- Low-battery notify: fire once per dip, re-arm on recharge --------
-    property var _notified: ({})       // id -> true while below threshold
+    // --- Low-battery notify: escalate by tier, re-arm on recharge ---------
+    // Per device: { tier, ts } while at warning (1) or critical (2). Re-notify
+    // when the tier increases (1 -> 2), or after notifyRepeatMinutes elapses
+    // at the same tier (0 = disabled, the original once-per-dip behavior).
+    property var _notified: ({})
     function checkLow(list) {
         if (!notifyOnLow) return;
-        //   below = d.pct <= lowThreshold && d.state === "discharging"
-        //   if below && !_notified[d.id]:  notify(d); _notified[d.id] = true
-        //   if !below && _notified[d.id]:  delete _notified[d.id]   // re-arm
 
         for (var i = 0; i < list.length; i++) {
             var d = list[i];
-            // peripherals often report no state ("unknown") — treat anything
-            // that isn't actively charging as eligible for the low warning.
-            var below = d.pct <= lowThreshold
-                        && d.state !== "charging" && d.state !== "fully-charged";
-            if (below && !_notified[d.id]) {
-                notify(d);
-                _notified[d.id] = true;
-            }
-            if (!below && _notified[d.id]) {
+            var t = DeviceIcons.tier(d.pct, d.state, lowThreshold, criticalThreshold);
+            var entry = _notified[d.id];
+
+            if (t > 0) {
+                var now = Date.now();
+                var escalated = entry && t > entry.tier;
+                var dueForRepeat = entry && notifyRepeatMinutes > 0
+                    && (now - entry.ts) >= notifyRepeatMinutes * 60000;
+                if (!entry || escalated || dueForRepeat) {
+                    notify(d, t);
+                    _notified[d.id] = {tier: t, ts: now};
+                }
+            } else if (entry) {
                 delete _notified[d.id];
             }
         }
@@ -177,9 +182,11 @@ Item {
 
 
     Process { id: notifier }           // reuse for notify-send
-    function notify(d) {
-        notifier.command = ["notify-send", "-u", "critical",
-            "Low battery", d.model + " " + d.pct + "%"];
+    function notify(d, tier) {
+        var urgency = tier >= 2 ? "critical" : "normal";
+        var title = tier >= 2 ? "Critical battery" : "Low battery";
+        notifier.command = ["notify-send", "-u", urgency,
+            title, d.model + " " + d.pct + "%"];
         notifier.running = true;
     }
 }

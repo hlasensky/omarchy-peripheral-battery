@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.Commons    // Color tokens
 
 // Single source of truth for device *types*: the canonical type list, the words
 // the `upower` CLI can emit, and the type -> glyph mapping. Registered as a
@@ -28,6 +29,28 @@ QtObject {
         if (normalized === "gaming-input" || normalized === "gaming input")
             return "gamepad";
         return normalized;
+    }
+
+    // Charge tier shared by Widget's bar icon and DevicePanel's card tint:
+    // 0 = normal, 1 = warning (<= lowThreshold), 2 = critical (<= criticalThreshold).
+    // Charging/fully-charged is always 0 regardless of pct.
+    function tier(pct, state, lowThreshold, criticalThreshold) {
+        if (state === "charging" || state === "fully-charged") return 0;
+        if (pct <= criticalThreshold) return 2;
+        if (pct <= lowThreshold) return 1;
+        return 0;
+    }
+
+    // Color.qml (the theme's Commons singleton) only defines
+    // foreground/background/accent/urgent/muted — there's no separate
+    // "warning/amber" token to reach for. So tier 1 is Color.urgent at
+    // reduced opacity (a visibly softer red) and tier 2 is full-strength
+    // Color.urgent; `normalColor` is whatever the caller uses at tier 0
+    // (differs between the bar icon and the popup card text).
+    function tierColor(tier, normalColor) {
+        if (tier === 2) return Color.urgent;
+        if (tier === 1) return Qt.rgba(Color.urgent.r, Color.urgent.g, Color.urgent.b, 0.6);
+        return normalColor;
     }
 
     function glyph(type) {

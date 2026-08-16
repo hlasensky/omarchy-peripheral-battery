@@ -9,14 +9,19 @@ BarWidget {
     moduleName: "hl.peripheral_battery"  // must match manifest id
 
     readonly property int  lowThreshold: setting("lowThreshold", 20)
+    // Must stay below lowThreshold or the warning tier collapses to zero width.
+    readonly property int  criticalThreshold: Math.min(setting("criticalThreshold", 10), lowThreshold - 1)
     readonly property bool hideLaptop:   setting("hideLaptopBattery", true)
     readonly property bool notifyOnLow:  setting("notifyOnLow", true)
+    readonly property int  notifyRepeatMinutes: setting("notifyRepeatMinutes", 0)
     readonly property var  deviceTypes:  setting("deviceTypes", ["mouse","keyboard","headset","gamepad"])
 
     BatteryService {
         id: service
         lowThreshold: root.lowThreshold
+        criticalThreshold: root.criticalThreshold
         notifyOnLow: root.notifyOnLow
+        notifyRepeatMinutes: root.notifyRepeatMinutes
         hideLaptopBattery: root.hideLaptop
         deviceTypes: root.deviceTypes
     }
@@ -30,8 +35,8 @@ BarWidget {
             if (!r || list[i].pct < r.pct) r = list[i];
         return r;
     }
-    readonly property bool repLow: rep && rep.pct <= lowThreshold
-        && rep.state !== "charging" && rep.state !== "fully-charged"
+    readonly property int repTier: rep
+        ? DeviceIcons.tier(rep.pct, rep.state, lowThreshold, criticalThreshold) : 0
 
     // no peripherals -> collapse so the bar keeps no dead gap.
     visible: service.devices.length > 0
@@ -47,9 +52,11 @@ BarWidget {
         bar: root.bar
         text: DeviceIcons.summary          // battery + wireless device
         useActiveColor: false
-        foreground: root.repLow ? Color.urgent
-                                : (root.bar ? root.bar.barForeground : Color.foreground)
-        tooltipText: "Peripheral battery"
+        foreground: DeviceIcons.tierColor(root.repTier,
+            root.bar ? root.bar.barForeground : Color.foreground)
+        tooltipText: root.rep
+            ? (root.rep.model || root.rep.type) + " " + root.rep.pct + "%"
+            : "Peripheral battery"
         onPressed: function (b) { card.open = !card.open }
     }
 
@@ -67,6 +74,7 @@ BarWidget {
             anchors.fill: parent
             devices: service.devices
             lowThreshold: root.lowThreshold
+            criticalThreshold: root.criticalThreshold
         }
     }
 }

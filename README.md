@@ -2,19 +2,24 @@
 
 Battery levels for your wireless **mouse, keyboard, headset & controllers**,
 right in the Omarchy bar. A single battery-bluetooth icon sits in the bar and
-turns red when something runs low; click it for a popup listing every device
-with its charge, and get a desktop notification before a device dies.
+turns amber then red as something runs low; click it for a popup listing
+every device with its charge, and get a desktop notification before a
+device dies. Hover the bar icon for a quick "Mouse 15%" without opening the
+popup.
 
 ![popup](screenshots/popup.png)
 ![bar](screenshots/bar.png)
 
 ## Features
 
-- **One tidy bar icon** — `battery-bluetooth` glyph, tinted urgent when any
-  device is low. No clutter of per-device chips.
+- **One tidy bar icon** — `battery-bluetooth` glyph, tinted amber at warning
+  and red at critical. No clutter of per-device chips. Hover it for the
+  neediest device's name and charge without opening the popup.
 - **Click-through popup** — click the icon for the full list (icon, name,
   charge %, mini bar, charging bolt). Click anywhere else to dismiss.
-- **Low-battery notifications** — fired once per dip, re-armed on recharge.
+- **Two-tier notifications** — normal urgency at the warning threshold,
+  critical urgency below that; re-armed on recharge, with an optional
+  repeat while still low so you don't miss it.
 
 ## Install
 
@@ -54,12 +59,14 @@ the plugin from `~/.config/omarchy/plugins/`.
 Configure from **Setup → Plugins**, or edit the widget entry in
 `~/.config/omarchy/shell.json`.
 
-| Key                 | Type        | Default                            | What it does                          |
-|---------------------|-------------|------------------------------------|---------------------------------------|
-| `lowThreshold`      | integer     | 20                                 | % at/below which a device is "low"    |
-| `hideLaptopBattery` | boolean     | true                               | Hide the laptop's own battery         |
-| `notifyOnLow`       | boolean     | true                               | Desktop notification on low           |
-| `deviceTypes`       | multiselect | mouse, keyboard, headset, gamepad  | Which device types to show            |
+| Key                    | Type        | Default                            | What it does                              |
+|------------------------|-------------|-------------------------------------|-------------------------------------------|
+| `lowThreshold`         | integer     | 20                                  | % at/below which a device is "warning"    |
+| `criticalThreshold`    | integer     | 10                                  | % at/below which a device is "critical"   |
+| `hideLaptopBattery`    | boolean     | true                                | Hide the laptop's own battery             |
+| `notifyOnLow`          | boolean     | true                                | Desktop notification on low               |
+| `notifyRepeatMinutes`  | integer     | 0                                   | Re-notify every N minutes while still low (0 = once) |
+| `deviceTypes`          | multiselect | mouse, keyboard, headset, gamepad   | Which device types to show                |
 
 ## How it works
 
