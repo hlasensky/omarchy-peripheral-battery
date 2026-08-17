@@ -49,8 +49,11 @@ the plugin from `~/.config/omarchy/plugins/`.
 ## Requirements
 
 - `upower` (ships with Omarchy).
+- A C compiler (ships with Omarchy) to build the Steam Controller 2 helper once.
 - The device must report battery to UPower. Most USB-dongle and Bluetooth
   peripherals do; some BT headsets need the experimental BlueZ battery plugin.
+  The 2026 Steam Controller is also supported directly over USB or its puck
+  when `steam-devices` grants access to Valve HID devices.
 - A Nerd Font as the bar font (Omarchy default) — the icons are Nerd Font
   glyphs.
 
@@ -70,12 +73,19 @@ Configure from **Setup → Plugins**, or edit the widget entry in
 
 ## How it works
 
-Two data paths, picked automatically at startup:
+UPower uses one of two data paths, picked automatically at startup:
 
 - **Path A (native):** imports `Quickshell.Services.UPower` and iterates
   `UPower.devices`. Event-driven, zero polling.
 - **Path B (fallback):** if that module isn't present, enumerates `upower -e`
   and parses each `upower -i <path>` block. A 30s timer backs it up.
+
+Alongside those paths, a read-only native HID probe handles the 2026 Steam
+Controller (`28de:1302`) and puck (`28de:1304`), which do not currently publish
+battery data through UPower. It consumes the controller's battery status report
+without taking the device away from Steam. The auditable C helper is compiled
+once into `~/.cache/omarchy-peripheral-battery/`; subsequent refreshes execute
+the small native binary directly.
 
 The bar widget (`bar-widget`) and the data source (`service`) are both declared
 in `manifest.json`.
