@@ -12,9 +12,8 @@ import qs.Commons  // Color, Style
 // convention (DevicePanel's row `tint`, Widget's `repTier`), so the gauge
 // tracks whatever theme is active instead of a fixed rainbow.
 //
-// Centered content swaps by state instead of layering both: the percentage
-// is the normal at-rest readout, the bolt only appears (and breathes) while
-// state === "charging" — so it reads as a direction flag, not decoration.
+// The percentage stays visible in every state. Charging adds a small breathing
+// bolt beside it, so users never lose the actual reading while on a charger.
 Item {
     id: root
 
@@ -72,35 +71,38 @@ Item {
         }
     }
 
-    OpticalGlyph {
-        id: bolt
+    Row {
         anchors.centerIn: parent
-        visible: root.state === "charging"
-        text: DeviceIcons.bolt
-        fontSize: Math.max(6, root.size * 0.38)
-        color: root.contentColor
+        spacing: Math.max(1, root.size * 0.02)
 
-        SequentialAnimation on opacity {
-            running: root.state === "charging"
-            loops: Animation.Infinite
-            alwaysRunToEnd: true
-            NumberAnimation { from: 1.0; to: 0.55; duration: 950; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 0.55; to: 1.0; duration: 950; easing.type: Easing.InOutSine }
-            // Our instances are persistently alive (popup rows live as long
-            // as the popup) — if charging stops mid-pulse, alwaysRunToEnd
-            // could otherwise leave the bolt resting dim indefinitely, so
-            // force it back to full opacity explicitly.
-            onRunningChanged: if (!running) bolt.opacity = 1.0
+        Text {
+            text: root.pct + "%"
+            color: root.contentColor
+            font.pixelSize: Math.max(7, root.size * 0.24)
+            font.weight: Font.Light
+            horizontalAlignment: Text.AlignHCenter
         }
-    }
 
-    Text {
-        anchors.centerIn: parent
-        visible: root.state !== "charging"
-        text: root.pct + "%"
-        color: root.contentColor
-        font.pixelSize: Math.max(7, root.size * 0.24)
-        font.weight: Font.Light
-        horizontalAlignment: Text.AlignHCenter
+        OpticalGlyph {
+            id: bolt
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.state === "charging"
+            text: DeviceIcons.bolt
+            fontSize: Math.max(6, root.size * 0.22)
+            color: root.contentColor
+
+            SequentialAnimation on opacity {
+                running: root.state === "charging"
+                loops: Animation.Infinite
+                alwaysRunToEnd: true
+                NumberAnimation { from: 1.0; to: 0.55; duration: 950; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 0.55; to: 1.0; duration: 950; easing.type: Easing.InOutSine }
+                // Our instances are persistently alive (popup rows live as long
+                // as the popup) — if charging stops mid-pulse, alwaysRunToEnd
+                // could otherwise leave the bolt resting dim indefinitely, so
+                // force it back to full opacity explicitly.
+                onRunningChanged: if (!running) bolt.opacity = 1.0
+            }
+        }
     }
 }

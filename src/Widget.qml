@@ -16,21 +16,36 @@ BarWidget {
     readonly property int  notifyRepeatMinutes: setting("notifyRepeatMinutes", 0)
     readonly property var  deviceTypes:  setting("deviceTypes", ["mouse","keyboard","headset","gamepad"])
 
-    BatteryService {
-        id: service
-        lowThreshold: root.lowThreshold
-        criticalThreshold: root.criticalThreshold
-        notifyOnLow: root.notifyOnLow
-        notifyRepeatMinutes: root.notifyRepeatMinutes
-        hideLaptopBattery: root.hideLaptop
-        deviceTypes: root.deviceTypes
+    // The manifest's service entry point is a shell-managed singleton. Every
+    // monitor's bar widget reads that one instance instead of running its own
+    // UPower scan, HID probe, and notification state.
+    readonly property var batteryService: root.bar && root.bar.shell
+        ? root.bar.shell.serviceFor(root.moduleName) : null
+    readonly property var devices: batteryService ? batteryService.devices : []
+
+    function syncServiceSettings() {
+        if (!batteryService) return;
+        batteryService.lowThreshold = lowThreshold;
+        batteryService.criticalThreshold = criticalThreshold;
+        batteryService.notifyOnLow = notifyOnLow;
+        batteryService.notifyRepeatMinutes = notifyRepeatMinutes;
+        batteryService.hideLaptopBattery = hideLaptop;
+        batteryService.deviceTypes = deviceTypes;
     }
+    onBatteryServiceChanged: syncServiceSettings()
+    onLowThresholdChanged: syncServiceSettings()
+    onCriticalThresholdChanged: syncServiceSettings()
+    onNotifyOnLowChanged: syncServiceSettings()
+    onNotifyRepeatMinutesChanged: syncServiceSettings()
+    onHideLaptopChanged: syncServiceSettings()
+    onDeviceTypesChanged: syncServiceSettings()
+    Component.onCompleted: syncServiceSettings()
 
     // Representative device for the bar = the one lowest on charge (what needs
     // attention). Everything else lives in the popup.
     readonly property var rep: {
         var r = null;
-        var list = service.devices;
+        var list = root.devices;
         for (var i = 0; i < list.length; i++)
             if (!r || list[i].pct < r.pct) r = list[i];
         return r;
@@ -39,7 +54,7 @@ BarWidget {
         ? DeviceIcons.tier(rep.pct, rep.state, lowThreshold, criticalThreshold) : 0
 
     // no peripherals -> collapse so the bar keeps no dead gap.
-    visible: service.devices.length > 0
+    visible: root.devices.length > 0
     // Size to the icon button; it owns the standard bar slot + padding.
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -72,7 +87,7 @@ BarWidget {
         DevicePanel {
             id: panel
             anchors.fill: parent
-            devices: service.devices
+            devices: root.devices
             lowThreshold: root.lowThreshold
             criticalThreshold: root.criticalThreshold
         }
