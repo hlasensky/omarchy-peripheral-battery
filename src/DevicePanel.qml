@@ -1,32 +1,45 @@
 import QtQuick
-import QtQuick.Layouts
+import "components"  // DeviceGaugeGrid, DeviceListView
+import qs.Ui         // OpticalGlyph
 import qs.Commons    // Color, Style tokens
 
 // Content of the peripheral popup — one row per device. Card chrome
 // (background, border, padding, outside-click dismiss) is provided by the
 // PopupCard host in Widget.qml, so this is content-only.
+//
+// The actual per-device layout is delegated to DeviceGaugeGrid / DeviceListView
+// so each popup style is self-contained in its own file and swappable via
+// `displayStyle` without touching this orchestrator.
 Item {
     id: panel
 
     property var devices: []
     property int lowThreshold: 20
     property int criticalThreshold: 10
+    // "Gauge" — dot-ring cards in a grid (default). "List" — one row per
+    // device with a thin linear bar, closer to a plain settings-panel list.
+    property string displayStyle: "Gauge"
+
+    readonly property bool isList: displayStyle.toLowerCase() === "list"
+    readonly property bool hasDevices: devices.length > 0
 
     readonly property int vpad: Style.spacing.sm
     readonly property int hpad: Style.spacing.md
-    readonly property int gridColumns: 3
-    readonly property real cardWidth: 108
 
-    // Grid grows/shrinks with device count instead of reserving a fixed
-    // 3-wide slot regardless of how many peripherals are actually present.
-    // Floored so a single device doesn't collapse to a starved-looking box —
-    // PopupCard's own chrome padding is sized for a normal-width popup, so
-    // shrinking all the way to content-tight makes that padding read as a
-    // huge, disproportionate gap.
-    readonly property int columns: Math.max(1, Math.min(devices.length, gridColumns))
+    // Style switch stays tucked behind the gear until clicked, then closes
+    // itself once a choice is made — it's a rare settings action, not
+    // something that should compete with the device list for space.
+    property bool settingsOpen: false
 
-    implicitWidth: devices.length > 0
-        ? Math.max(200, columns * cardWidth + (columns - 1) * Style.spacing.md + hpad * 2)
+    // Emitted when the user picks a style from the in-card switch below.
+    // No settings UI ships in Omarchy yet to reach `displayStyle` any other
+    // way, and hand-editing shell.json doesn't survive the shell's own
+    // config writeback — so the switch has to live here and persist itself
+    // through the same updateEntryInline() path first-party panels use.
+    signal styleSelected(string style)
+
+    implicitWidth: hasDevices
+        ? (isList ? deviceList.implicitWidth : deviceGrid.implicitWidth) + hpad * 2
         : 220
     implicitHeight: col.implicitHeight + vpad * 2
 
@@ -39,9 +52,68 @@ Item {
         y: panel.vpad
         spacing: Style.spacing.rowGap
 
-        // empty state
+        // settings row — gear toggles the style switch below; picking a
+        // style closes it again
+        Row {
+            anchors.right: parent.right
+            spacing: Style.spacing.xxs
+
+            Row {
+                visible: panel.settingsOpen
+                spacing: Style.spacing.xxs
+                anchors.verticalCenter: parent.verticalCenter
+
+                Repeater {
+                    model: ["Gauge", "List"]
+
+                    delegate: Rectangle {
+                        readonly property bool active: modelData.toLowerCase() === panel.displayStyle.toLowerCase()
+
+                        width: label.implicitWidth + Style.spacing.sm * 2
+                        height: label.implicitHeight + Style.spacing.xs * 2
+                        radius: Style.cornerRadius
+                        color: active ? Color.accent : "transparent"
+                        border.width: active ? 0 : 1
+                        border.color: Color.muted
+
+                        Text {
+                            id: label
+                            anchors.centerIn: parent
+                            text: modelData
+                            font.pixelSize: Style.font.caption
+                            color: parent.active ? Color.background : Color.muted
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                panel.styleSelected(modelData);
+                                panel.settingsOpen = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            OpticalGlyph {
+                anchors.verticalCenter: parent.verticalCenter
+                width: fontSize
+                height: fontSize
+                text: DeviceIcons.gear
+                fontSize: Style.font.iconSmall
+                color: panel.settingsOpen ? Color.accent : Color.muted
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: panel.settingsOpen = !panel.settingsOpen
+                }
+            }
+        }
+
         Text {
-            visible: panel.devices.length === 0
+            visible: !panel.hasDevices
             width: parent.width
             text: "No peripherals reporting battery"
             color: Color.muted
@@ -49,58 +121,22 @@ Item {
             horizontalAlignment: Text.AlignHCenter
         }
 
-        GridLayout {
-            // Column only manages vertical stacking, so without this the
-            // grid stayed left-aligned at full width — with fewer than
-            // gridColumns cards, the leftover slack all piled up on the
-            // right instead of framing the cards evenly.
+        DeviceListView {
+            id: deviceList
             anchors.horizontalCenter: col.horizontalCenter
-            visible: panel.devices.length > 0
-            columns: panel.columns
-            columnSpacing: Style.spacing.md
-            rowSpacing: Style.spacing.lg
+            visible: panel.hasDevices && panel.isList
+            devices: panel.isList ? panel.devices : []
+            lowThreshold: panel.lowThreshold
+            criticalThreshold: panel.criticalThreshold
+        }
 
-            Repeater {
-                model: panel.devices
-                // No per-card border — PopupCard already frames the whole
-                // popup, and a second border this close in the same color
-                // just doubled up as a distracting nested-frame artifact.
-                // Grouping is by proximity/spacing alone.
-                delegate: ColumnLayout {
-                    Layout.preferredWidth: panel.cardWidth
-                    Layout.alignment: Qt.AlignTop
-                    spacing: Style.spacing.xs
-
-                    readonly property int tier: DeviceIcons.tier(modelData.pct, modelData.state,
-                        panel.lowThreshold, panel.criticalThreshold)
-                    readonly property color tint: DeviceIcons.tierColor(tier, Color.popups.text)
-
-                    // battery ring gauge — percentage centered inside, bolt
-                    // swaps in only while charging (replaces device-type
-                    // glyph + bolt + minibar + separate percent text)
-                    BatteryGauge {
-                        Layout.alignment: Qt.AlignHCenter
-                        pct: modelData.pct
-                        state: modelData.state
-                        size: 44
-                        contentColor: parent.tint
-                    }
-
-                    // model name
-                    Text {
-                        Layout.preferredWidth: panel.cardWidth
-                        Layout.alignment: Qt.AlignHCenter
-                        horizontalAlignment: Text.AlignHCenter
-                        text: modelData.model || modelData.type
-                        color: Color.popups.text
-                        font.pixelSize: Style.font.bodySmall
-                        font.weight: Font.Light
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
-                    }
-                }
-            }
+        DeviceGaugeGrid {
+            id: deviceGrid
+            anchors.horizontalCenter: col.horizontalCenter
+            visible: panel.hasDevices && !panel.isList
+            devices: panel.isList ? [] : panel.devices
+            lowThreshold: panel.lowThreshold
+            criticalThreshold: panel.criticalThreshold
         }
     }
 }

@@ -15,6 +15,7 @@ BarWidget {
     readonly property bool notifyOnLow:  setting("notifyOnLow", true)
     readonly property int  notifyRepeatMinutes: setting("notifyRepeatMinutes", 0)
     readonly property var  deviceTypes:  setting("deviceTypes", ["mouse","keyboard","headset","gamepad"])
+    readonly property string displayStyle: setting("displayStyle", "Gauge")
 
     // The manifest's service entry point is a shell-managed singleton. Every
     // monitor's bar widget reads that one instance instead of running its own
@@ -22,6 +23,14 @@ BarWidget {
     readonly property var batteryService: root.bar && root.bar.shell
         ? root.bar.shell.serviceFor(root.moduleName) : null
     readonly property var devices: batteryService ? batteryService.devices : []
+
+    // Persists through the shell's own settings store instead of a raw
+    // shell.json edit — same pattern first-party panels (power, clock) use,
+    // via updateEntryInline().
+    function setDisplayStyle(style) {
+        var updated = Object.assign({}, root.settings, {displayStyle: style});
+        if (root.bar && root.bar.shell) root.bar.shell.updateEntryInline(root.moduleName, updated);
+    }
 
     function syncServiceSettings() {
         if (!batteryService) return;
@@ -90,6 +99,8 @@ BarWidget {
             devices: root.devices
             lowThreshold: root.lowThreshold
             criticalThreshold: root.criticalThreshold
+            displayStyle: root.displayStyle
+            onStyleSelected: function (style) { root.setDisplayStyle(style) }
         }
     }
 }

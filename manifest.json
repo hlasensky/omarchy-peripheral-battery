@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "hl.peripheral_battery",
   "name": "Peripheral Battery Indicator",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "author": "hlasensky",
   "description": "Battery levels for wireless mouse, keyboard, headset & controllers in the bar, with a click-through popup and low-battery notifications.",
   "kinds": ["bar-widget", "service"],
@@ -22,9 +22,12 @@
       "hideLaptopBattery": true,
       "notifyOnLow": true,
       "notifyRepeatMinutes": 0,
-      "deviceTypes": ["mouse", "keyboard", "headset", "gamepad"]
+      "deviceTypes": ["mouse", "keyboard", "headset", "gamepad"],
+      "displayStyle": "Gauge"
     },
     "schema": [
+      {"key": "displayStyle", "type": "enum", "options": ["Gauge", "List"],
+       "defaultValue": "Gauge", "label": "Popup style"},
       {"key": "lowThreshold", "type": "integer", "min": 5, "max": 50, "label": "Warning battery %"},
       {"key": "criticalThreshold", "type": "integer", "min": 1, "max": 49, "label": "Critical battery %"},
       {"key": "hideLaptopBattery", "type": "boolean", "label": "Hide laptop battery"},

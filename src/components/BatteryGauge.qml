@@ -1,16 +1,16 @@
 import QtQuick
+import ".."        // DeviceIcons
 import qs.Ui       // OpticalGlyph
 import qs.Commons  // Color, Style
 
 // Dot-matrix battery gauge — a ring of small dots (Nothing OS-style) instead
 // of a solid stroke, filled clockwise from 12 o'clock by charge level, with
 // the percentage centered inside — or a bolt glyph when actively charging.
-// Used in DevicePanel's per-device cards.
+// Used by GaugeCard for the Gauge popup style.
 //
-// Ring color is a straight lerp between Color.urgent (0%) and Color.accent
-// (100%) — both theme tokens already used by this plugin's low-battery
-// convention (DevicePanel's row `tint`, Widget's `repTier`), so the gauge
-// tracks whatever theme is active instead of a fixed rainbow.
+// Ring color comes from DeviceIcons.levelColor() — the same charge-amount
+// lerp DeviceListRow's bar fill uses, so both popup styles read identically
+// at a glance instead of drifting into their own palettes.
 //
 // The percentage stays visible in every state. Charging adds a small breathing
 // bolt beside it, so users never lose the actual reading while on a charger.
@@ -30,16 +30,9 @@ Item {
     height: size
 
     // --- Color ------------------------------------------------------------
-    function _lerp(a, b, t) {
-        return Qt.rgba(a.r + (b.r - a.r) * t,
-                        a.g + (b.g - a.g) * t,
-                        a.b + (b.b - a.b) * t,
-                        a.a + (b.a - a.a) * t);
-    }
-
     readonly property color ringColor: ringColorOverride.a > 0
         ? ringColorOverride
-        : _lerp(Color.urgent, Color.accent, Math.max(0, Math.min(100, pct)) / 100)
+        : DeviceIcons.levelColor(pct)
 
     // --- Fill fraction, animated ----------------------------------------
     // Pin fully-charged to a visually complete ring even if UPower reports

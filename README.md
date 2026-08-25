@@ -8,6 +8,7 @@ device dies. Hover the bar icon for a quick "Mouse 15%" without opening the
 popup.
 
 ![popup](screenshots/popup.png)
+![popup2](screenshots/popup-2.png)
 ![bar](screenshots/bar.png)
 
 ## Features
@@ -15,8 +16,10 @@ popup.
 - **One tidy bar icon** — `battery-bluetooth` glyph, tinted amber at warning
   and red at critical. No clutter of per-device chips. Hover it for the
   neediest device's name and charge without opening the popup.
-- **Click-through popup** — click the icon for the full list (icon, name,
-  charge %, mini bar, charging bolt). Click anywhere else to dismiss.
+- **Click-through popup** — click the icon for the full list. Two layouts,
+  switchable via the `displayStyle` setting: **Gauge** (dot-ring cards with
+  the charge % centered inside, plus a charging bolt) or **List** (compact
+  rows with a name and a thin linear bar). Click anywhere else to dismiss.
 - **Two-tier notifications** — normal urgency at the warning threshold,
   critical urgency below that; re-armed on recharge, with an optional
   repeat while still low so you don't miss it.
@@ -59,11 +62,16 @@ the plugin from `~/.config/omarchy/plugins/`.
 
 ## Settings
 
-Configure from **Setup → Plugins**, or edit the widget entry in
-`~/.config/omarchy/shell.json`.
+Edit the widget's entry in `~/.config/omarchy/shell.json` (find it under
+`hl.peripheral_battery`); the shell hot-reloads on save, no restart needed.
+
+```bash
+omarchy launch config-editor ~/.config/omarchy/shell.json
+```
 
 | Key                    | Type        | Default                            | What it does                              |
 |------------------------|-------------|-------------------------------------|-------------------------------------------|
+| `displayStyle`         | enum        | Gauge                               | Popup layout: `Gauge` (dot-ring cards) or `List` (compact rows with a linear bar) |
 | `lowThreshold`         | integer     | 20                                  | % at/below which a device is "warning"    |
 | `criticalThreshold`    | integer     | 10                                  | % at/below which a device is "critical"   |
 | `hideLaptopBattery`    | boolean     | true                                | Hide the laptop's own battery             |

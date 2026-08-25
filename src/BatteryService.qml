@@ -31,8 +31,8 @@ Item {
     // --- PATH B: parse the `upower` CLI ----------------------------------
     // upower -e         -> device object paths (one per line)
     // upower -i <path>  -> "key: value" block (percentage, state, model, power supply, type)
-    property var _pending: []           // paths still to detail this cycle
-    property var _collected: []         // parsed devices this cycle
+    property var _pending: []
+    property var _collected: []
 
     Process {
         id: enumerate
@@ -57,7 +57,7 @@ Item {
     Process {
         id: detail
         // command set dynamically to ["upower", "-i", <path>] before running
-        property string _path: ""   // path currently being detailed
+        property string _path: ""
         // StdioCollector buffers the whole `-i` block; text is ready at exit.
         stdout: StdioCollector { id: detailOut }
         onExited: function (code, status) {
@@ -122,7 +122,7 @@ Item {
 
     Timer {
         id: poll
-        interval: 30000                // 30s safety net.
+        interval: 30000
         repeat: true
         running: true
         // UPower.devices.valuesChanged only fires when a device is added or
@@ -168,15 +168,6 @@ Item {
 
     // Parse one `upower -i` block into a device object (or null to drop it).
     function parseDevice(block, path) {
-        //   type:         -> normalize to mouse|keyboard|headset|gamepad|pen|other
-        //   percentage:   -> "82%" -> 82 (int)
-        //   state:        -> discharging|charging|fully-charged
-        //   model:        -> string
-        //   power supply: -> "yes" means laptop/UPS -> drop when hideLaptopBattery
-        // Filters:
-        //   - drop if power-supply and hideLaptopBattery
-        //   - drop if normalized type not in deviceTypes
-        // Return {id: path, type, pct, state, model, charging} or null.
         function field(re) {
             var m = block.match(re);
             return m ? m[1].trim() : "";

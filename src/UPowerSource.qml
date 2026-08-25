@@ -12,7 +12,7 @@ Item {
 
     // mirrored from BatteryService (set as bindings on createObject)
     property bool hideLaptopBattery: true
-    property var  deviceTypes: DeviceIcons.known   // canonical type set
+    property var  deviceTypes: DeviceIcons.known
 
     property var devices: []
 
@@ -45,7 +45,7 @@ Item {
             var d = list[i];
             if (!d || !d.ready) continue;
             if (d.type === UPowerDeviceType.LinePower) continue;   // AC adapters
-            if (d.isLaptopBattery && hideLaptopBattery) continue;  // laptop battery
+            if (d.isLaptopBattery && hideLaptopBattery) continue;
             if (!(d.percentage > 0)) continue;                     // no real reading (0% = AC/aggregate)
 
             var t = typeName(d.type);
@@ -70,7 +70,6 @@ Item {
         function onValuesChanged() { src.rebuild(); }
     }
 
-    // filter changes from BatteryService should re-filter immediately
     onHideLaptopBatteryChanged: rebuild()
     onDeviceTypesChanged: rebuild()
 
