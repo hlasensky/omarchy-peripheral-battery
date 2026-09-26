@@ -16,6 +16,29 @@ Item {
     property bool hideLaptopBattery: true
     property var  deviceTypes: DeviceIcons.known   // filter set; overridden by Widget
     property bool useUPower: false
+    property var  deviceNames: ({})     // {serial: "name" | {name, type}}; wired from Widget settings
+
+    // nativePath (e.g. "hidpp_battery_0") -> serial, read from sysfs. UPower's
+    // Quickshell binding has no serial, and identical models (two of the same
+    // mouse) are otherwise indistinguishable.
+    property var _serials: ({})
+    Process {
+        id: serialScan
+        command: ["sh", "-c", "for d in /sys/class/power_supply/*; do [ -r \"$d/serial_number\" ] && printf '%s\\t%s\\n' \"${d##*/}\" \"$(cat \"$d/serial_number\")\"; done; true"]
+        running: true
+        stdout: StdioCollector { id: serialOut }
+        onExited: function (code, status) {
+            var map = {};
+            var lines = serialOut.text.split("\n");
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].split("\t");
+                if (parts.length === 2 && parts[1].trim()) map[parts[0]] = parts[1].trim();
+            }
+            svc._serials = map;
+            svc.publish();
+        }
+    }
+    onDeviceNamesChanged: publish()
 
     // Steam Controller 2 (2026) is not exposed by UPower. A tiny native HID
     // probe runs alongside either UPower path and is merged at publish time.
@@ -131,6 +154,7 @@ Item {
         onTriggered: {
             if (svc._steamHelperPath && !steamBattery.running)
                 steamBattery.running = true;
+            if (!serialScan.running) serialScan.running = true;
             if (svc.useUPower) { if (svc._upower) svc._upower.rebuild(); }
             else refresh();
         }
@@ -184,6 +208,8 @@ Item {
         var state     = field(/\bstate:\s*(\S+)/);   // peripherals often omit this
         var model     = field(/model:\s*(.+)/);
         var powerSup  = field(/power supply:\s*(\S+)/);
+        var serial    = field(/serial:\s*(.+)/);
+        var native    = field(/native-path:\s*(.+)/);
 
         if (powerSup === "yes" && hideLaptopBattery) return null;
         if (!deviceTypes.includes(type)) return null;
@@ -191,6 +217,7 @@ Item {
         var pct = parseInt(pctStr, 10);
         if (isNaN(pct)) return null;
         return {id: path, type: type, pct: pct, state: state || "unknown", model: model,
+                serial: serial, nativePath: native,
                 charging: state === "charging" || state === "fully-charged"};
     }
 
@@ -212,8 +239,47 @@ Item {
                 && !hasNativeSteamController)
             merged.push(_steamDevice);
 
+        merged = applyIdentity(merged);
         devices = merged;
         checkLow(merged);
+    }
+
+    // Attach serials, collapse the same physical device seen twice (e.g. a
+    // mouse on its receiver and on the charging cable at once), and apply the
+    // user's per-serial display names.
+    function applyIdentity(list) {
+        var out = [];
+        var bySerial = {};
+        for (var i = 0; i < list.length; i++) {
+            var d = Object.assign({}, list[i]);
+            if (!d.serial) d.serial = _serials[d.nativePath || d.id] || "";
+            // Bluetooth devices have no sysfs serial; their MAC (from the BlueZ
+            // path) is what `upower -i` reports as serial, so key them by that.
+            if (!d.serial) {
+                var mac = String(d.nativePath || d.id).match(/dev_([0-9A-Fa-f]{2}(?:_[0-9A-Fa-f]{2}){5})$/);
+                if (mac) d.serial = mac[1].replace(/_/g, ":");
+            }
+            d.key = d.serial || d.id;           // what renames are stored under
+            d.defaultModel = d.model;
+            var override = deviceNames[d.key];
+            if (typeof override === "string") override = {name: override};
+            if (override) {
+                if (override.name) d.model = override.name;
+                if (override.type) d.type = override.type;  // UPower tags a cabled G703 as "keyboard"
+            }
+            if (d.serial) d.id = "serial:" + d.serial;
+
+            if (d.serial && bySerial[d.serial] !== undefined) {
+                var prev = out[bySerial[d.serial]];
+                // prefer the entry that knows it's charging, then the higher reading
+                if ((d.charging && !prev.charging) || (d.charging === prev.charging && d.pct > prev.pct))
+                    out[bySerial[d.serial]] = d;
+                continue;
+            }
+            if (d.serial) bySerial[d.serial] = out.length;
+            out.push(d);
+        }
+        return out;
     }
 
     // --- Low-battery notify: escalate by tier, re-arm on recharge ---------
@@ -256,7 +322,7 @@ Item {
     Process { id: notifier }           // reuse for notify-send
     function notify(d, tier) {
         var urgency = tier >= 2 ? "critical" : "normal";
-        var title = tier >= 2 ? "Critical battery" : "Low battery";
+        var title = tier >= 2 ? Strings.t("criticalTitle") : Strings.t("lowTitle");
         notifier.command = ["notify-send", "-u", urgency,
             title, d.model + " " + d.pct + "%"];
         notifier.running = true;
