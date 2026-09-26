@@ -1,12 +1,11 @@
 # Local module for the plugin's own QML files.
 # Singleton must be registered here so `DeviceIcons.glyph(...)` resolves.
 singleton DeviceIcons DeviceIcons.qml
+singleton Strings Strings.qml
 
 # Non-singleton types resolve by filename in the same dir, but list them for clarity.
-# The popup-style components (BatteryGauge, GaugeCard, DeviceGaugeGrid,
-# DeviceListRow, DeviceListView) live in components/ instead — qmldir type
-# entries can't point outside their own directory, so DevicePanel.qml pulls
-# them in via `import "components"` and they reach back here via `import ".."`.
+# BatteryGauge lives in components/ — qmldir type entries can't point outside
+# their own directory, so Widget.qml pulls it in via `import "components"` and
+# it reaches back here via `import ".."`.
 BatteryService BatteryService.qml
-DevicePanel DevicePanel.qml
 Widget Widget.qml

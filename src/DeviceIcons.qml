@@ -31,7 +31,7 @@ QtObject {
         return normalized;
     }
 
-    // Charge tier shared by Widget's bar icon and DevicePanel's card tint:
+    // Charge tier shared by the bar icon and the popup's tints:
     // 0 = normal, 1 = warning (<= lowThreshold), 2 = critical (<= criticalThreshold).
     // Charging/fully-charged is always 0 regardless of pct.
     function tier(pct, state, lowThreshold, criticalThreshold) {
@@ -53,21 +53,6 @@ QtObject {
         return normalColor;
     }
 
-    // Charge-amount color shared by both popup styles (BatteryGauge's ring,
-    // DeviceListRow's bar fill): a straight lerp between Color.urgent (0%)
-    // and Color.accent (100%), independent of the warning/critical tiers
-    // above — this is the continuous "how full" reading, not the discrete
-    // "needs attention" one.
-    function levelColor(pct) {
-        var t = Math.max(0, Math.min(100, pct)) / 100;
-        return Qt.rgba(
-            Color.urgent.r + (Color.accent.r - Color.urgent.r) * t,
-            Color.urgent.g + (Color.accent.g - Color.urgent.g) * t,
-            Color.urgent.b + (Color.accent.b - Color.urgent.b) * t,
-            Color.urgent.a + (Color.accent.a - Color.urgent.a) * t
-        );
-    }
-
     function glyph(type) {
         switch (type) {
         case "mouse":        return String.fromCodePoint(0xF037D); // nf-md-mouse
@@ -85,7 +70,4 @@ QtObject {
 
     // fixed bar summary icon: battery + wireless device (nf-md-battery_bluetooth)
     readonly property string summary: String.fromCodePoint(0xF0948)
-
-    // popup style-switch trigger: nf-md-cog
-    readonly property string gear: String.fromCodePoint(0xF0493)
 }

@@ -16,10 +16,24 @@ popup.
 - **One tidy bar icon** — `battery-bluetooth` glyph, tinted amber at warning
   and red at critical. No clutter of per-device chips. Hover it for the
   neediest device's name and charge without opening the popup.
-- **Click-through popup** — click the icon for the full list. Two layouts,
-  switchable via the `displayStyle` setting: **Gauge** (dot-ring cards with
-  the charge % centered inside, plus a charging bolt) or **List** (compact
-  rows with a name and a thin linear bar). Click anywhere else to dismiss.
+- **Native Omarchy panel** — the popup is built on the shell's own panel kit
+  (the same `KeyboardPanel` / `PanelHero` / section headers / meters the
+  first-party Agents panel uses), so it matches the rest of the shell and
+  takes keyboard focus (`Esc` closes, `h`/`l` switches layout, `Tab` moves
+  to the neighbouring bar panel).
+- **Grouped by type** — a header with the device count and how many are
+  charging, then one section per type (Mice, Keyboards, Headsets, …).
+- **Two layouts** — switch from the header: **Rings** (cards with a
+  round-capped ring gauge and the charge % inside) or **List** (rows with
+  a thin meter). A pulsing bolt marks devices that are charging.
+- **Rename devices** — click a name, type, `Enter` saves, `Esc` cancels, an
+  empty name restores the original. Names are stored per serial number, so
+  two identical devices (e.g. two of the same mouse) can be told apart.
+- **One entry per device** — a device seen twice at once (e.g. a mouse on
+  its receiver *and* its charging cable) is collapsed into a single entry.
+- **Multilingual** — English, Português, Español, Français and Deutsch;
+  follows the system locale or the `language` setting. Add a language by
+  adding a table to `src/Strings.qml`.
 - **Two-tier notifications** — normal urgency at the warning threshold,
   critical urgency below that; re-armed on recharge, with an optional
   repeat while still low so you don't miss it.
@@ -71,7 +85,9 @@ omarchy launch config-editor ~/.config/omarchy/shell.json
 
 | Key                    | Type        | Default                            | What it does                              |
 |------------------------|-------------|-------------------------------------|-------------------------------------------|
-| `displayStyle`         | enum        | Gauge                               | Popup layout: `Gauge` (dot-ring cards) or `List` (compact rows with a linear bar) |
+| `displayStyle`         | enum        | Gauge                               | Popup layout: `Gauge` (Rings cards) or `List` (rows with a linear meter); also switchable from the popup header |
+| `language`             | enum        | auto                                | UI language: `auto` (system locale), `en`, `pt`, `es`, `fr`, `de` |
+| `deviceNames`          | object      | `{}`                                | Per-device overrides keyed by serial (Bluetooth: MAC): `"name"` or `{ "name": "…", "type": "mouse" }`. Written by the rename UI; `type` fixes devices UPower misclassifies |
 | `lowThreshold`         | integer     | 20                                  | % at/below which a device is "warning"    |
 | `criticalThreshold`    | integer     | 10                                  | % at/below which a device is "critical"   |
 | `hideLaptopBattery`    | boolean     | true                                | Hide the laptop's own battery             |
@@ -94,6 +110,10 @@ battery data through UPower. It consumes the controller's battery status report
 without taking the device away from Steam. The auditable C helper is compiled
 once into `~/.cache/omarchy-peripheral-battery/`; subsequent refreshes execute
 the small native binary directly.
+
+Serial numbers come from UPower (path B) or `/sys/class/power_supply/*/serial_number`
+(path A, whose Quickshell binding doesn't expose them); they key renames and
+collapse duplicate entries of the same physical device.
 
 The bar widget (`bar-widget`) and the data source (`service`) are both declared
 in `manifest.json`.

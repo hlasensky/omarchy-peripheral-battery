@@ -23,7 +23,9 @@
       "notifyOnLow": true,
       "notifyRepeatMinutes": 0,
       "deviceTypes": ["mouse", "keyboard", "headset", "gamepad"],
-      "displayStyle": "Gauge"
+      "displayStyle": "Gauge",
+      "language": "auto",
+      "deviceNames": {}
     },
     "schema": [
       {"key": "displayStyle", "type": "enum", "options": ["Gauge", "List"],
@@ -36,7 +38,9 @@
        "label": "Re-notify every N minutes while low (0 = once)"},
       {"key": "deviceTypes", "type": "multiselect",
        "options": ["mouse", "keyboard", "headset", "headphones", "gamepad", "pen", "other"],
-       "label": "Device types to show"}
+       "label": "Device types to show"},
+      {"key": "language", "type": "enum", "options": ["auto", "en", "pt", "es", "fr", "de"],
+       "defaultValue": "auto", "label": "Language (auto = system locale)"}
     ]
   }
 }
